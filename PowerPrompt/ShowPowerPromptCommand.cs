@@ -13,6 +13,10 @@ public class ShowPowerPromptCommand : PSCmdlet
 	private static readonly AnsiColor DefaultColor = new("\x1b[39m", "\x1b[49m");
 	private static readonly AnsiColor CwdBackground = new("\x1b[34m", "\x1b[44m");
 	private static readonly AnsiColor CwdForeground = new("\x1b[97m", "\x1b[107m");
+	private static readonly AnsiColor AwsProfileDevBackground = new("\x1b[95m", "\x1b[105m");
+	private static readonly AnsiColor AwsProfileQaBackground = new("\x1b[38;5;208m", "\x1b[48;5;208m");
+	private static readonly AnsiColor AwsProfileProdBackground = new("\x1b[31m", "\x1b[41m");
+	private static readonly AnsiColor AwsProfileForeground = new("\x1b[30m", "\x1b[40m");
 	private static readonly AnsiColor GitForeground = new("\x1b[30m", "\x1b[30m");
 	private static readonly AnsiColor GitUnknownColor = new("\x1b[90m", "\x1b[100m");
 	private static readonly AnsiColor GitOutOfSyncColor = new("\x1b[96m", "\x1b[106m");
@@ -73,15 +77,17 @@ public class ShowPowerPromptCommand : PSCmdlet
 		WriteOpeningToken(prompt);
 		WriteCwd(prompt);
 
+		var currentBackground = WriteAwsProfile(prompt);
+
 		if (repository is null)
 		{
-			WriteClosingToken(prompt, CwdBackground, DefaultColor);
+			WriteClosingToken(prompt, currentBackground, DefaultColor);
 			prompt.Append("\x1b[0m");
 			return prompt.ToString();
 		}
 
 		var statusColor = GetGitStatusColor(repository, status);
-		WriteClosingToken(prompt, CwdBackground, statusColor);
+		WriteClosingToken(prompt, currentBackground, statusColor);
 		WriteGitBranch(prompt, statusColor, repository);
 		WriteClosingToken(prompt, statusColor, DefaultColor);
 
@@ -104,6 +110,37 @@ public class ShowPowerPromptCommand : PSCmdlet
 		var cwd = SessionState.Path.CurrentFileSystemLocation.Path;
 		cwd = cwd.Replace(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "~");
 		prompt.Append(CwdForeground, CwdBackground, $"{cwd} ");
+	}
+
+	private AnsiColor WriteAwsProfile(StringBuilder prompt)
+	{
+		if (!SessionState.Path.CurrentFileSystemLocation.Path.StartsWith(@"C:\EDF\volvo"))
+		{
+			return CwdBackground;
+		}
+
+		if (SessionState.PSVariable.GetValue("ENV:AWS_PROFILE") is not string awsProfile)
+		{
+			return CwdBackground;
+		}
+
+		switch (awsProfile.ToUpperInvariant())
+		{
+			case "DEV":
+				WriteClosingToken(prompt, CwdBackground, AwsProfileDevBackground);
+				prompt.Append(AwsProfileForeground, AwsProfileDevBackground, "dev ");
+				return AwsProfileDevBackground;
+			case "QA":
+				WriteClosingToken(prompt, CwdBackground, AwsProfileQaBackground);
+				prompt.Append(AwsProfileForeground, AwsProfileQaBackground, "qa ");
+				return AwsProfileQaBackground;
+			case "PROD":
+				WriteClosingToken(prompt, CwdBackground, AwsProfileProdBackground);
+				prompt.Append(AwsProfileForeground, AwsProfileProdBackground, "prod ");
+				return AwsProfileProdBackground;
+			default:
+				return CwdBackground;
+		}
 	}
 
 	private void WriteClosingToken(StringBuilder prompt, AnsiColor foreground, AnsiColor background)
