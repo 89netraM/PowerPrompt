@@ -127,16 +127,21 @@ public class ShowPowerPromptCommand : PSCmdlet
 		switch (awsProfile.ToUpperInvariant())
 		{
 			case "DEV":
+			case "TEST":
+			case "C3-DEV":
+			case "C3-TEST":
 				WriteClosingToken(prompt, CwdBackground, AwsProfileDevBackground);
-				prompt.Append(AwsProfileForeground, AwsProfileDevBackground, "dev ");
+				prompt.Append(AwsProfileForeground, AwsProfileDevBackground, $"{awsProfile} ");
 				return AwsProfileDevBackground;
 			case "QA":
+			case "C3-QA":
 				WriteClosingToken(prompt, CwdBackground, AwsProfileQaBackground);
-				prompt.Append(AwsProfileForeground, AwsProfileQaBackground, "qa ");
+				prompt.Append(AwsProfileForeground, AwsProfileQaBackground, $"{awsProfile} ");
 				return AwsProfileQaBackground;
 			case "PROD":
+			case "C3-PROD":
 				WriteClosingToken(prompt, CwdBackground, AwsProfileProdBackground);
-				prompt.Append(AwsProfileForeground, AwsProfileProdBackground, "prod ");
+				prompt.Append(AwsProfileForeground, AwsProfileProdBackground, $"{awsProfile} ");
 				return AwsProfileProdBackground;
 			default:
 				return CwdBackground;
